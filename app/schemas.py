@@ -15,6 +15,7 @@ class ProductoCreate(BaseModel):
 
 class ProductoOut(ProductoCreate):
     id: int
+    imagen_url: Optional[str] = None  # Actividad 10: URL de la imagen del producto
 
     class Config:
         from_attributes = True

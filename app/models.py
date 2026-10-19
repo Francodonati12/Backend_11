@@ -15,6 +15,7 @@ class Producto(Base):
     cuotas_valor = Column(Float)
     garantia_meses = Column(Integer)
     stock = Column(Integer)
+    imagen_url = Column(String, nullable=True)  # Actividad 10: URL relativa de la imagen
 
     # Relación con items de pedido
     items_pedido = relationship("ItemPedido", back_populates="producto")

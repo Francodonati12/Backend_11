@@ -122,3 +122,61 @@ def revocar_pedido_service(db: Session, usuario: Usuario, pedido_id: int) -> Sol
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error interno al procesar la revocación."
         )
+
+
+def revocar_pedido_sin_auth(db: Session, pedido_id: int) -> SolicitudRevocacion:
+    """
+    Disposición 954/2025: el derecho de arrepentimiento/revocación NO requiere
+    que el consumidor esté autenticado. Solo se necesita el ID del pedido.
+    """
+    pedido = db.query(Pedido).filter(Pedido.id == pedido_id).first()
+    if not pedido:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="El pedido no existe."
+        )
+
+    if pedido.estado == "cancelado":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="El pedido ya se encuentra cancelado."
+        )
+
+    ahora = datetime.now(timezone.utc)
+    creado_en = pedido.creado_en
+    if creado_en.tzinfo is None:
+        creado_en = creado_en.replace(tzinfo=timezone.utc)
+
+    if (ahora - creado_en).days > 10:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="El plazo de 10 días para revocar la compra ha expirado."
+        )
+
+    try:
+        for item in pedido.items:
+            producto = db.query(Producto).filter(Producto.id == item.producto_id).first()
+            if producto:
+                producto.stock += item.cantidad
+
+        pedido.estado = "cancelado"
+
+        solicitud = SolicitudRevocacion(
+            codigo=generar_codigo(),
+            pedido_id=pedido.id,
+            usuario_id=pedido.usuario_id,  # se usa el usuario dueño del pedido
+        )
+        db.add(solicitud)
+        db.commit()
+        db.refresh(solicitud)
+        return solicitud
+
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error interno al procesar la revocación."
+        )

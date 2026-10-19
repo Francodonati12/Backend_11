@@ -18,3 +18,12 @@ def listar_productos(db: Session, skip: int = 0, limit: int = 10, nombre: str = 
         query = query.filter(Producto.precio_final <= precio_max)
         
     return query.offset(skip).limit(limit).all()
+def eliminar_producto(db: Session, producto_id: int):
+    prod = db.query(Producto).filter(Producto.id == producto_id).first()
+    if not prod:
+        return False
+    from app.models import ItemPedido
+    db.query(ItemPedido).filter(ItemPedido.producto_id == producto_id).delete()
+    db.delete(prod)
+    db.commit()
+    return True

@@ -49,7 +49,7 @@ def construir_datos_usuario(db: Session, usuario: Usuario) -> Dict[str, Any]:
             "email": usuario.email,
             "rol": usuario.rol,
             "activo": usuario.activo,
-            "creado_en": usuario.creado_en
+            "creado_en": getattr(usuario, "creado_en", getattr(usuario, "created_at", "2026-01-01"))
         },
         "pedidos": pedidos_lista,
         "solicitudes_revocacion": revocaciones_lista

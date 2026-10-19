@@ -1,15 +1,27 @@
+"""
+Punto de entrada de la aplicación FastAPI.
+
+Actividad 10: se monta la carpeta uploads/ como archivos estáticos
+bajo el prefijo /static, para servir las imágenes de productos.
+"""
+import os
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 from app.database import Base, engine
 from app.core.config import settings
 from app.routers import productos, auth, pedidos, usuarios
+
 # Creamos las tablas en la base de datos al arrancar
 Base.metadata.create_all(bind=engine)
 
 # Instanciamos la app con el título del .env
 app = FastAPI(title=settings.PROJECT_NAME)
 
-# Parte 4: Middleware CORS para conectar con el frontend
+# ── CORS ─────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "*"],
@@ -18,14 +30,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Parte 3: Incluimos las rutas de productos
-app.include_router(productos.router)
+# ── Archivos estáticos (Actividad 10) ─────────────────────────────────────────
+# Creamos la carpeta si no existe para que StaticFiles no lance error en primer arranque
+Path("uploads").mkdir(exist_ok=True)
+Path("uploads/productos").mkdir(parents=True, exist_ok=True)
 
-# Clase 7: Incluimos las rutas de autenticación
-app.include_router(auth.router)
+app.mount("/static", StaticFiles(directory="uploads"), name="static")
 
-# Clase 8: Incluimos las rutas de pedidos y checkout
-app.include_router(pedidos.router)
-
-# Incluimos las rutas de usuarios
-app.include_router(usuarios.router)
+# ── Routers ───────────────────────────────────────────────────────────────────
+app.include_router(productos.router)   # Parte 3 + Actividad 10
+app.include_router(auth.router)        # Clase 7: autenticación
+app.include_router(pedidos.router)     # Clase 8: pedidos y checkout
+app.include_router(usuarios.router)    # Clase 9: gestión de usuarios
