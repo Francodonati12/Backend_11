@@ -45,3 +45,6 @@ env/
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Uploads (Clase 10)
+uploads/

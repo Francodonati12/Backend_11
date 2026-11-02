@@ -12,11 +12,16 @@ class Settings(BaseSettings):
     ACCESS_MIN: int = 30
     REFRESH_MIN: int = 10080
 
+    # Configuración de Seed (Clase 11)
+    SEED_ADMIN_EMAIL: str = "admin@ecommerce.com"
+    SEED_ADMIN_PASSWORD: str = "Admin1234!"
+
     @property
     def origins(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()

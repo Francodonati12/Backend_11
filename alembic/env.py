@@ -11,12 +11,15 @@ from alembic import context
 # Agregar la raíz del proyecto al path de Python para que encuentre la carpeta app
 sys.path.append(".")
 
-# Importar la Base de la base de datos y los modelos
+from app.core.config import settings
 from app.database import Base
 from app.models import Usuario, Pedido, ItemPedido, Producto
 
 # Configuración de Alembic desde el archivo .ini
 config = context.config
+
+# Configurar la URL de la base de datos desde settings (Clase 11)
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("%", "%%"))
 
 # Configuración del sistema de logs
 if config.config_file_name is not None:

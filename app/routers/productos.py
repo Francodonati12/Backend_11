@@ -103,8 +103,9 @@ async def subir_imagen_producto(
 
     # ── Validación 2: Tamaño ─────────────────────────────────────────────────
     if len(contenido) > TAMANO_MAXIMO:
+        status_413 = getattr(status, "HTTP_413_CONTENT_TOO_LARGE", status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status_413,
             detail="El archivo supera el límite de 2 MB.",
         )
 
