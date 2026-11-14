@@ -48,3 +48,5 @@ Thumbs.db
 
 # Uploads (Clase 10)
 uploads/
+
+*.sql
