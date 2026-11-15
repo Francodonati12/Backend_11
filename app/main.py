@@ -8,6 +8,7 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -23,7 +24,7 @@ Base.metadata.create_all(bind=engine)
 # Instanciamos la app con el título del .env
 app = FastAPI(title=settings.PROJECT_NAME)
 
-# ── CORS ─────────────────────────────────────────────────────────────────────
+# ── Middlewares (CORS y Compresión Clase 12) ─────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "*"],
@@ -31,13 +32,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-# ── Archivos estáticos (Clase 10 y 11) ─────────────────────────────────────────
+
+# ── Archivos estáticos con caché (Clase 10, 11 y 12) ──────────────────────────
+class StaticConCache(StaticFiles):
+    async def get_response(self, path, scope):
+        respuesta = await super().get_response(path, scope)
+        if respuesta.status_code == 200:
+            respuesta.headers["Cache-Control"] = "public, max-age=2592000, immutable"
+        return respuesta
+
+
 Path("uploads/productos").mkdir(parents=True, exist_ok=True)
 Path("app/static/demo").mkdir(parents=True, exist_ok=True)
 
-app.mount("/static", StaticFiles(directory="uploads"), name="static")
-app.mount("/demo", StaticFiles(directory="app/static/demo"), name="demo")
+app.mount("/static", StaticConCache(directory="uploads"), name="static")
+app.mount("/demo", StaticConCache(directory="app/static/demo"), name="demo")
 
 
 # ── Endpoint de Salud (Clase 11) ──────────────────────────────────────────────
