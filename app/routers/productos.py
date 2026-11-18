@@ -28,6 +28,7 @@ TAMANO_MAXIMO = 2 * 1024 * 1024  # 2 MB
 
 # ── CRUD básico ───────────────────────────────────────────────────────────────
 
+@router.post("", response_model=schemas.ProductoOut, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=schemas.ProductoOut, status_code=status.HTTP_201_CREATED)
 def crear_producto(
     producto: schemas.ProductoCreate,
@@ -37,6 +38,7 @@ def crear_producto(
     return productos_service.crear_producto(db=db, producto=producto)
 
 
+@router.get("", response_model=List[schemas.ProductoOut])
 @router.get("/", response_model=List[schemas.ProductoOut])
 def obtener_productos(
     skip: int = Query(0, ge=0),
@@ -48,6 +50,24 @@ def obtener_productos(
     return productos_service.listar_productos(
         db=db, skip=skip, limit=limit, nombre=nombre, precio_max=precio_max
     )
+
+
+@router.put("/{producto_id}", response_model=schemas.ProductoOut)
+@router.patch("/{producto_id}", response_model=schemas.ProductoOut)
+def actualizar_producto(
+    producto_id: int,
+    producto_in: schemas.ProductoCreate,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin)
+):
+    prod = db.query(Producto).filter(Producto.id == producto_id).first()
+    if not prod:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    for campo, valor in producto_in.model_dump(exclude_unset=True).items():
+        setattr(prod, campo, valor)
+    db.commit()
+    db.refresh(prod)
+    return prod
 
 
 @router.delete("/{producto_id}", status_code=status.HTTP_200_OK)

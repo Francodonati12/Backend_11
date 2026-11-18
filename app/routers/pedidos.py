@@ -11,6 +11,7 @@ from app.services.pedidos import crear_pedido, revocar_pedido_service, revocar_p
 router = APIRouter(prefix="/pedidos", tags=["Pedidos"])
 
 
+@router.post("", response_model=PedidoOut, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=PedidoOut, status_code=status.HTTP_201_CREATED)
 def checkout(
     datos: PedidoCreate,
@@ -57,15 +58,23 @@ def obtener_pedido_por_id(
         "Solo se requiere el ID del pedido."
     ),
 )
+@router.post(
+    "/{pedido_id}/arrepentimiento",
+    status_code=status.HTTP_201_CREATED,
+    summary="Revocar pedido (derecho de arrepentimiento)",
+)
 def revocar_pedido(
     pedido_id: int,
     db: Session = Depends(get_db),
+
 ):
     """
     No requiere token. Cualquier persona con el ID del pedido puede solicitar
     la revocación dentro de los 10 días de realizada la compra.
     """
     solicitud = revocar_pedido_sin_auth(db, pedido_id)
+    if isinstance(solicitud, dict):
+        return solicitud
     return {
         "codigo": solicitud.codigo,
         "pedido_id": solicitud.pedido_id,

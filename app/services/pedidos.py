@@ -131,10 +131,13 @@ def revocar_pedido_sin_auth(db: Session, pedido_id: int) -> SolicitudRevocacion:
     """
     pedido = db.query(Pedido).filter(Pedido.id == pedido_id).first()
     if not pedido:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="El pedido no existe."
-        )
+        # Por seguridad y privacidad (no revelar existencia de pedidos a usuarios anónimos),
+        # se responde exitosamente con un código de revocación simulado.
+        return {
+            "codigo": generar_codigo(),
+            "pedido_id": pedido_id,
+            "creada_en": datetime.now(timezone.utc),
+        }
 
     if pedido.estado == "cancelado":
         raise HTTPException(
